@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Prism Core 音声変換</title>
+<style>body{font:16px/1.7 system-ui;max-width:720px;margin:40px auto;padding:24px;background:#101827;color:#ecf1ff}button,a{font:inherit;padding:12px 20px;margin:8px;display:inline-block;background:#c3caff;color:#101827;border:0;border-radius:8px}li{margin:16px 0}</style>
+<h1>BGM互換ファイルの生成</h1><p>この開発用ページは、同じフォルダのOGG音源をブラウザでデコードして22.05kHz・16bit・モノラルWAVに変換します。外部への送信はありません。</p>
+<button id="convert">3曲を変換する</button><p id="status" role="status">変換前</p><ul id="results"></ul>
+<script>
+document.getElementById('convert').onclick=async function(){
+  this.disabled=true;const status=document.getElementById('status'),results=document.getElementById('results');results.replaceChildren();
+  try{
+    const context=new OfflineAudioContext(1,1,22050);
+    for(const name of ['home','star_boss','true_boss']){
+      status.textContent=name+' を変換しています…';
+      const response=await fetch('../assets/sounds/bgm/'+name+'.ogg');if(!response.ok)throw new Error(name+' の読み込みに失敗');
+      const buffer=await context.decodeAudioData(await response.arrayBuffer()),length=buffer.length,bytes=new ArrayBuffer(44+length*2),view=new DataView(bytes);
+      const text=(offset,value)=>{for(let i=0;i<value.length;i++)view.setUint8(offset+i,value.charCodeAt(i));};
+      text(0,'RIFF');view.setUint32(4,36+length*2,true);text(8,'WAVE');text(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,22050,true);view.setUint32(28,44100,true);view.setUint16(32,2,true);view.setUint16(34,16,true);text(36,'data');view.setUint32(40,length*2,true);
+      const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+      for(let i=0;i<length;i++){let sample=0;for(const channel of channels)sample+=channel[i]/channels.length;sample=Math.max(-1,Math.min(1,sample));view.setInt16(44+i*2,Math.round(sample*(sample<0?32768:32767)),true);}
+      const item=document.createElement('li'),link=document.createElement('a');link.href=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));link.download=name+'.wav';link.textContent=name+'.wav を保存';item.append(link,document.createTextNode(` ${(bytes.byteLength/1048576).toFixed(2)} MB / ${buffer.duration.toFixed(1)}秒`));results.append(item);
+    }
+    status.textContent='3曲の変換が完了しました。保存したWAVを assets/sounds/bgm に配置してください。';
+  }catch(error){status.textContent=error.message;}finally{this.disabled=false;}
+};
+</script></html>

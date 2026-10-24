@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b101c"><meta name="description" content="Prism Core — ランダムダンジョンを探索するツインスティック・アクション。">
+  <title>Prism Core</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <canvas id="world" aria-label="Prism Core ゲーム画面"></canvas>
+    <div class="ambient"></div>
+    <header class="brandbar" id="brandbar"><a class="wordmark" href="#" id="brand"><span class="brand-icon">◇</span> PRISM CORE</a><div class="header-actions"><button id="language" aria-label="Switch language">EN</button><button id="sound" aria-label="音の切り替え">♪ ON</button><button id="fullscreen" aria-label="全画面表示">⛶</button></div></header>
+    <section id="home" class="screen home">
+      <div class="hero-copy"><p class="eyebrow">EXPLORE. EVOLVE. SURVIVE.</p><h1>PRISM<br><span>CORE</span><i>◇</i></h1><p class="intro" data-ja="光を集め、深部へ。" data-en="Gather light. Descend into the unknown.">光を集め、深部へ。</p><p class="subintro" data-ja="姿を変える迷宮。10階の先に待つもの。" data-en="An ever-changing labyrinth. Ten floors. One core.">姿を変える迷宮。10階の先に待つもの。</p>
+        <button class="primary start" id="start"><span data-ja="探索をはじめる" data-en="Begin expedition">探索をはじめる</span><span>↗</span></button>
+        <nav class="home-links"><button data-page="help" data-ja="遊び方" data-en="How to play">遊び方</button><button data-page="bestiary" data-ja="敵図鑑" data-en="Bestiary">敵図鑑</button><button data-page="records" data-ja="戦績" data-en="Records">戦績</button></nav>
+      </div>
+      <div class="prism-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="core-shape"></div><span class="satellite s1">△</span><span class="satellite s2">□</span><span class="satellite s3">⬡</span><div class="art-caption">CORE SIGNAL <b>ACTIVE</b><br><span>DEPTH / 10 SECTORS</span></div></div>
+      <footer class="home-footer"><span data-ja="横持ち · 左で移動 / 右で射撃" data-en="Landscape · Move left / Aim right">横持ち · 左で移動 / 右で射撃</span><span>01 — 10 / INTO THE PRISM</span></footer>
+    </section>
+    <section id="hud" hidden aria-label="ゲーム情報">
+      <div class="vitals"><div class="vitals-label"><b id="hpText">200 / 200</b><span id="levelText">LV 01</span></div><div class="meter"><i id="hpFill"></i></div><div class="exp-meter"><i id="expFill"></i></div></div>
+      <div class="floor-readout"><strong id="floorText">01 <small>/ 10</small></strong><span id="timerText">00:00</span></div>
+      <div class="play-actions"><button id="details" aria-label="ステータス">ⓘ</button><button id="pause" aria-label="一時停止">Ⅱ</button></div>
+      <div class="objective" id="objective"></div><div id="powerText" class="power-text"></div>
+      <button id="mapButton" class="map-button" aria-label="マップを拡大"><canvas id="minimap" width="150" height="150"></canvas><span>MAP ＋</span></button>
+      <div class="boss-health" id="bossHealth" hidden><span id="bossName"></span><div class="meter"><i id="bossFill"></i></div></div>
+    </section>
+    <div id="touchControls" hidden><div class="stick left-stick" id="moveStick" aria-label="移動スティック"><div class="stick-guide"></div><i></i><span data-ja="移動" data-en="MOVE">移動</span></div><div class="stick right-stick" id="aimStick" aria-label="照準と射撃スティック"><div class="stick-guide"></div><i></i><span data-ja="照準 / 射撃" data-en="AIM / FIRE">照準 / 射撃</span></div></div>
+    <div id="toast" role="status" hidden></div>
+    <section class="overlay" id="panel" hidden><div class="panel-card"><header class="panel-heading"><div><p class="eyebrow" id="panelEyebrow">PRISM CORE</p><h2 id="panelTitle"></h2></div><button id="closePanel" aria-label="閉じる">✕</button></header><div id="panelContent"></div></div></section>
+    <div class="rotate-note" id="rotateNote"><span>↻</span><h2 data-ja="横向きで、探索しよう。" data-en="Turn sideways to explore.">横向きで、探索しよう。</h2><p data-ja="両手で移動と射撃を操作します。" data-en="Use both thumbs to move and fire.">両手で移動と射撃を操作します。</p></div>
+  </main>
+  <script src="core.js"></script><script src="audio.js"></script><script src="app.js"></script>
+</body></html>
