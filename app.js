@@ -1,6 +1,7 @@
 /* Browser shell: rendering, responsive UI, multi-touch, audio and tab-scoped records. */
 (() => {
   'use strict';
+  const DEBUG_TOOLS=true; // Release checklist: disable/remove temporary debug controls.
   const {Game,TYPES,EXP,TAU,clamp}=Prism;
   const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
   const game=new Game();let lang='ja',page=null,last=0,accumulator=0,toastUntil=0;
@@ -48,6 +49,12 @@
     syncShell();
   }
   const button=(id,label,primary=false)=>`<button id="${id}" class="${primary?'primary':''}">${label}</button>`;
+  function debugJumpToBoss(){
+    if(!DEBUG_TOOLS||game.state!=='paused'||page!=='pause')return;
+    resetInput();audio.unlock();game.events=[];game.trueBoss=false;
+    game.loadFloor(10);game.state='playing';page=null;mapExpanded=false;accumulator=0;
+    syncShell();handleEvents();notify(tr('DEBUG · ボス部屋へ移動しました','DEBUG · Entered boss room'));
+  }
   const stat=(label,value)=>`<div class="stat"><span>${label}</span><strong>${value}</strong></div>`;
   function renderPanel(){
     const body=$('panelContent');document.querySelector('.panel-card').scrollTop=0;$('panelEyebrow').textContent='PRISM CORE / '+page.toUpperCase();$('closePanel').hidden=page==='result';
@@ -69,6 +76,10 @@
     }else if(page==='pause'){
       const p=game.player;$('panelTitle').textContent=tr('探索を一時停止中','Expedition paused');
       body.innerHTML=`<div class="stat-grid">${stat('HP',`${Math.ceil(p.hp)} / ${p.maxHp}`)}${stat('ATTACK',p.atk)}${stat('LEVEL',p.level)}${stat('SPEED',p.speed.toFixed(2))}${stat('FLOOR',`${game.floor} / 10`)}${stat('TIME',time(game.elapsed))}</div><p class="muted">${tr('トークン強化','Token bonuses')}: ATK +${p.atkBonus} / HP +${p.hpBonus} / SPD +${p.speedBonus.toFixed(2)} / DUR +${p.duration.toFixed(1)}s / INV +${p.invBonus}F</p><div class="sliders"><label>SE <input id="seVolume" aria-label="効果音の音量" type="range" min="0" max="1" step=".05" value="${audio.seVolume}"></label><label>BGM <input id="bgmVolume" aria-label="BGM音量" type="range" min="0" max="1" step=".05" value="${audio.bgmVolume}"></label></div><div class="button-row">${button('resume',tr('探索を続ける','Resume'),true)}${button('retire',tr('探索を終了','End expedition'))}</div>`;
+      if(DEBUG_TOOLS){
+        body.innerHTML+=`<div class="button-row">${button('debugBoss',tr('DEBUG · ボス部屋へ移動','DEBUG · Go to boss room'))}</div>`;
+        $('debugBoss').onclick=debugJumpToBoss;
+      }
       $('resume').onclick=closePanel;
       $('retire').onclick=()=>{page='retire';renderPanel();};
       $('seVolume').oninput=e=>audio.seVolume=Number(e.target.value);
