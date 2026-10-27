@@ -45,7 +45,7 @@
   }
   function closePanel(){
     if(game.state==='paused')game.state='playing';page=null;mapExpanded=false;accumulator=0;
-    if(game.state==='playing'){audio.unlock();audio.music(game.floor===10?(game.trueBoss?'true_boss':'star_boss'):'');}
+    if(game.state==='playing'){audio.unlock();audio.music(game.floor===10&&game.enemies.some(e=>e.type.includes('boss')&&e.hp>0)?(game.trueBoss?'true_boss':'star_boss'):'');}
     syncShell();
   }
   const button=(id,label,primary=false)=>`<button id="${id}" class="${primary?'primary':''}">${label}</button>`;
@@ -105,7 +105,7 @@
       if(event.type==='sound')audio.sound(event.name);
       if(event.type==='floor'){audio.pause();audio.music(event.floor===10?(event.trueBoss?'true_boss':'star_boss'):'');notify(event.floor===10?(event.trueBoss?'WARNING / PRISM':'WARNING / STAR GUARDIAN'):`SECTOR ${String(event.floor).padStart(2,'0')} / 10`);}
       if(event.type==='portal')notify(tr('ワープが開きました · マップを確認','Portal open · Check your map'));
-      if(event.type==='kill'){archive.kills[event.enemy]=(Number(archive.kills[event.enemy])||0)+1;if(event.enemy.includes('boss'))archive.trophies[event.enemy]=true;saveArchive();}
+      if(event.type==='kill'){archive.kills[event.enemy]=(Number(archive.kills[event.enemy])||0)+1;if(event.enemy.includes('boss')){archive.trophies[event.enemy]=true;audio.music('');}saveArchive();}
       if(event.type==='finish'){
         archive.records.push({win:event.win,floor:event.floor,time:event.time,level:event.level,kills:event.kills,trueBoss:event.trueBoss});saveArchive();audio.pause();audio.music('');audio.sound(event.win?'victory':'player_defeat');resetInput();page='result';renderPanel();syncShell();
       }
