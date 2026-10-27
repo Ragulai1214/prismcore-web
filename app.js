@@ -131,8 +131,7 @@
   $('panel').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const list=[...$('panel').querySelectorAll('button:not([hidden]),input')];if(!list.length)return;const first=list[0],end=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}});
   function resize(){
     width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-    scale=Math.min(width/1000,height/650);
-    if(width<height&&width<=950&&game.state==='playing')openPanel('pause');
+    scale=width<height?Math.min(width/600,height/900):Math.min(width/1000,height/650);
   }
   window.addEventListener('resize',resize);resize();
   function drawShape(c,type,x,y,r,rotation=0){
