@@ -110,6 +110,18 @@
     for(const type of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(type,release);
   }
   bindStick('moveStick',move);bindStick('aimStick',aim);
+  // Install before the first gesture; Safari can start selection from the page
+  // ancestor even when the individual stick has user-select disabled.
+  const playSurfaces=[canvas,$('touchControls'),$('moveStick'),$('aimStick')];
+  const startsOnPlaySurface=e=>playSurfaces.some(el=>(e.composedPath?.()||[]).includes(el)||e.target===el);
+  const capturePlayGesture=e=>{if(startsOnPlaySurface(e))e.preventDefault();};
+  for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])document.addEventListener(type,capturePlayGesture,{capture:true,passive:false});
+  for(const type of ['selectstart','contextmenu'])document.addEventListener(type,e=>{
+    if(game.state==='playing'||startsOnPlaySurface(e))e.preventDefault();
+  },{capture:true});
+  document.addEventListener('selectionchange',()=>{
+    if(game.state==='playing')window.getSelection?.()?.removeAllRanges();
+  });
   // Safari can still start native touch gestures despite pointer-event handling.
   // Scope cancellation to the play surface so menus retain normal scrolling.
   for(const surface of [canvas,$('touchControls'),$('moveStick'),$('aimStick')]){

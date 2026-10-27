@@ -1,5 +1,7 @@
 @charset "UTF-8";
 /* Keep native selection and long-press menus off the interactive play surface. */
+html,body,#app,#app *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app input,#app textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 #world,#touchControls,#touchControls *,#hud,#hud *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #touchControls,#touchControls *{touch-action:none;-webkit-tap-highlight-color:transparent}
 .stick *{pointer-events:none}
