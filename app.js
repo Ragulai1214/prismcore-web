@@ -110,6 +110,13 @@
     for(const type of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(type,release);
   }
   bindStick('moveStick',move);bindStick('aimStick',aim);
+  // Safari can still start native touch gestures despite pointer-event handling.
+  // Scope cancellation to the play surface so menus retain normal scrolling.
+  for(const surface of [canvas,$('touchControls'),$('moveStick'),$('aimStick')]){
+    const preventNative=e=>{if(game.state==='playing')e.preventDefault();};
+    for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])surface.addEventListener(type,preventNative,{passive:false});
+    for(const type of ['contextmenu','selectstart','dragstart'])surface.addEventListener(type,preventNative);
+  }
   canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===0&&game.state==='playing'){mouse.down=true;mouse.x=e.clientX;mouse.y=e.clientY;canvas.setPointerCapture(e.pointerId);}});
   canvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){mouse.x=e.clientX;mouse.y=e.clientY;}});
   for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,()=>mouse.down=false);
