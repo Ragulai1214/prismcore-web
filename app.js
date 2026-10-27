@@ -49,9 +49,12 @@
     syncShell();
   }
   const button=(id,label,primary=false)=>`<button id="${id}" class="${primary?'primary':''}">${label}</button>`;
-  function debugJumpToBoss(){
+  function debugJumpToBoss(trueBoss){
     if(!DEBUG_TOOLS||game.state!=='paused'||page!=='pause')return;
-    resetInput();audio.unlock();game.events=[];game.trueBoss=false;
+    resetInput();audio.unlock();game.events=[];game.trueBoss=trueBoss;
+    // Base stats plus nine level-ups; discard all token and temporary bonuses.
+    Object.assign(game.player,{level:10,exp:0,maxHp:200+20*9,hp:200+20*9,atk:20+5*9,speed:6,
+      atkBonus:0,hpBonus:0,speedBonus:0,duration:0,invBonus:0,inv:0,homing:0,explosive:0});
     game.loadFloor(10);game.state='playing';page=null;mapExpanded=false;accumulator=0;
     syncShell();handleEvents();notify(tr('DEBUG · ボス部屋へ移動しました','DEBUG · Entered boss room'));
   }
@@ -77,8 +80,9 @@
       const p=game.player;$('panelTitle').textContent=tr('探索を一時停止中','Expedition paused');
       body.innerHTML=`<div class="stat-grid">${stat('HP',`${Math.ceil(p.hp)} / ${p.maxHp}`)}${stat('ATTACK',p.atk)}${stat('LEVEL',p.level)}${stat('SPEED',p.speed.toFixed(2))}${stat('FLOOR',`${game.floor} / 10`)}${stat('TIME',time(game.elapsed))}</div><p class="muted">${tr('トークン強化','Token bonuses')}: ATK +${p.atkBonus} / HP +${p.hpBonus} / SPD +${p.speedBonus.toFixed(2)} / DUR +${p.duration.toFixed(1)}s / INV +${p.invBonus}F</p><div class="sliders"><label>SE <input id="seVolume" aria-label="効果音の音量" type="range" min="0" max="1" step=".05" value="${audio.seVolume}"></label><label>BGM <input id="bgmVolume" aria-label="BGM音量" type="range" min="0" max="1" step=".05" value="${audio.bgmVolume}"></label></div><div class="button-row">${button('resume',tr('探索を続ける','Resume'),true)}${button('retire',tr('探索を終了','End expedition'))}</div>`;
       if(DEBUG_TOOLS){
-        body.innerHTML+=`<div class="button-row">${button('debugBoss',tr('DEBUG · ボス部屋へ移動','DEBUG · Go to boss room'))}</div>`;
-        $('debugBoss').onclick=debugJumpToBoss;
+        body.innerHTML+=`<p class="muted" style="margin-top:16px">${tr('DEBUG · Lv10 / トークンボーナスなし','DEBUG · Level 10 / No token bonuses')}</p><div class="button-row">${button('debugBoss','STAR BOSS')}${button('debugTrueBoss','PRISM CORE')}</div>`;
+        $('debugBoss').onclick=()=>debugJumpToBoss(false);
+        $('debugTrueBoss').onclick=()=>debugJumpToBoss(true);
       }
       $('resume').onclick=closePanel;
       $('retire').onclick=()=>{page='retire';renderPanel();};
