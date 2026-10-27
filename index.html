@@ -21,7 +21,7 @@
     <section id="hud" hidden aria-label="ゲーム情報">
       <div class="vitals"><div class="vitals-label"><b id="hpText">200 / 200</b><span id="levelText">LV 01</span></div><div class="meter"><i id="hpFill"></i></div><div class="exp-meter"><i id="expFill"></i></div></div>
       <div class="floor-readout"><strong id="floorText">01 <small>/ 10</small></strong><span id="timerText">00:00</span></div>
-      <div class="play-actions"><button id="details" aria-label="ステータス">ⓘ</button><button id="pause" aria-label="一時停止">Ⅱ</button></div>
+      <div class="play-actions"><button id="details" aria-label="探索ガイド">ⓘ</button><button id="pause" aria-label="一時停止">Ⅱ</button></div>
       <div class="objective" id="objective"></div><div id="powerText" class="power-text"></div>
       <button id="mapButton" class="map-button" aria-label="マップを拡大"><canvas id="minimap" width="150" height="150"></canvas><span>MAP ＋</span></button>
       <div class="boss-health" id="bossHealth" hidden><span id="bossName"></span><div class="meter"><i id="bossFill"></i></div></div>
@@ -30,5 +30,5 @@
     <div id="toast" role="status" hidden></div>
     <section class="overlay" id="panel" hidden><div class="panel-card"><header class="panel-heading"><div><p class="eyebrow" id="panelEyebrow">PRISM CORE</p><h2 id="panelTitle"></h2></div><button id="closePanel" aria-label="閉じる">✕</button></header><div id="panelContent"></div></div></section>
   </main>
-  <script src="core.js"></script><script src="audio.js"></script><script src="app.js?v=20261027-touch3"></script>
+  <script src="core.js"></script><script src="audio.js"></script><script src="app.js?v=20261027-guide"></script>
 </body></html>

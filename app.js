@@ -66,7 +66,7 @@
     }else if(page==='bestiary'){
       $('panelTitle').textContent=tr('敵図鑑','Bestiary');body.innerHTML='<div class="cards">'+Object.entries(TYPES).map(([key,t])=>`<div class="info-card enemy-card"><canvas width="100" height="100" data-enemy="${key}"></canvas><div><h3 style="color:${t.color}">${names[key]} ${archive.trophies[key]?'◇':''}</h3><div class="enemy-info">HP ${t.hp} / ATK ${t.atk} · ${tr('撃破','DEFEATED')} ${Number(archive.kills[key])||0}</div><p>${descriptions[key][lang==='ja'?0:1]}</p></div></div>`).join('')+'</div>';
       body.querySelectorAll('canvas').forEach(c=>drawShape(c.getContext('2d'),c.dataset.enemy,50,50,30,0));
-    }else if(page==='pause'||page==='details'){
+    }else if(page==='pause'){
       const p=game.player;$('panelTitle').textContent=tr('探索を一時停止中','Expedition paused');
       body.innerHTML=`<div class="stat-grid">${stat('HP',`${Math.ceil(p.hp)} / ${p.maxHp}`)}${stat('ATTACK',p.atk)}${stat('LEVEL',p.level)}${stat('SPEED',p.speed.toFixed(2))}${stat('FLOOR',`${game.floor} / 10`)}${stat('TIME',time(game.elapsed))}</div><p class="muted">${tr('トークン強化','Token bonuses')}: ATK +${p.atkBonus} / HP +${p.hpBonus} / SPD +${p.speedBonus.toFixed(2)} / DUR +${p.duration.toFixed(1)}s / INV +${p.invBonus}F</p><div class="sliders"><label>SE <input id="seVolume" aria-label="効果音の音量" type="range" min="0" max="1" step=".05" value="${audio.seVolume}"></label><label>BGM <input id="bgmVolume" aria-label="BGM音量" type="range" min="0" max="1" step=".05" value="${audio.bgmVolume}"></label></div><div class="button-row">${button('resume',tr('探索を続ける','Resume'),true)}${button('retire',tr('探索を終了','End expedition'))}</div>`;
       $('resume').onclick=closePanel;
@@ -145,7 +145,7 @@
   document.querySelectorAll('[data-page]').forEach(el=>el.onclick=()=>{audio.unlock();audio.music('home');openPanel(el.dataset.page);});
   $('language').onclick=()=>{lang=lang==='ja'?'en':'ja';translate();};$('sound').onclick=()=>{audio.unlock();audio.toggle();$('sound').textContent=audio.enabled?'♪ ON':'♪ OFF';if(audio.enabled&&game.state==='home')audio.music('home');};
   $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if($('app').requestFullscreen)await $('app').requestFullscreen();else notify(tr('このブラウザは全画面表示に未対応です','Fullscreen is not available in this browser'));}catch{notify(tr('全画面表示を開始できませんでした','Fullscreen could not be started'));}};
-  $('pause').onclick=()=>openPanel('pause');$('details').onclick=()=>openPanel('details');$('mapButton').onclick=()=>openPanel('map');$('closePanel').onclick=closePanel;
+  $('pause').onclick=()=>openPanel('pause');$('details').onclick=()=>openPanel('help');$('mapButton').onclick=()=>openPanel('map');$('closePanel').onclick=closePanel;
   // Keep keyboard focus inside a modal. Escape is handled with the pause shortcut above.
   $('panel').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const list=[...$('panel').querySelectorAll('button:not([hidden]),input')];if(!list.length)return;const first=list[0],end=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}});
   function resize(){
