@@ -93,7 +93,7 @@
       $('panelTitle').textContent=tr('探索を終了しますか？','End this expedition?');body.innerHTML=`<p>${tr('今回の到達階層と撃破数を戦績に記録して、タイトルへ戻ります。','Record this expedition’s progress and return to the title screen.')}</p><div class="button-row">${button('cancelRetire',tr('戻る','Go back'),true)}${button('confirmRetire',tr('終了する','End expedition'))}</div>`;
       $('cancelRetire').onclick=()=>{page='pause';renderPanel();};$('confirmRetire').onclick=()=>{game.state='playing';game.finish(false);handleEvents();home();};
     }else if(page==='map'){
-      $('panelTitle').textContent=tr('探索マップ','Sector map');body.innerHTML=`<canvas id="largeMap" class="large-map" width="500" height="500"></canvas><div class="map-legend"><span style="color:#ffe589">■ ${tr('スイッチ','SWITCH')}</span><span style="color:#82f0cd">◇ ${tr('ワープ','PORTAL')}</span><span>● ${tr('現在地','YOU')}</span></div>`;drawMap($('largeMap'));
+      $('panelTitle').textContent=tr('探索マップ','Sector map');body.innerHTML=`<canvas id="largeMap" class="large-map" width="500" height="500"></canvas><div class="map-legend"><span style="color:#ffe589">■ ${tr('スイッチ','SWITCH')}</span><span style="color:#82f0cd">◇ ${tr('ワープ','PORTAL')}</span><span>● ${tr('現在地','YOU')}</span><span style="color:#ff6178">× ${tr('ボス','BOSS')}</span><span style="color:#ffe589">◆ ${tr('特殊弾アイテム','POWER-UP')}</span><span>· ${tr('トークン（各色）','TOKENS (COLORED)')}</span><span style="color:#6ce3ff">● ${tr('バリア装置','BARRIER DEVICE')}</span></div>`;drawMap($('largeMap'));
     }else if(page==='result'){
       const win=game.state==='victory',total=Object.values(game.kills).reduce((a,b)=>a+b,0);
       $('panelTitle').textContent=win?tr('最深部、到達。','Core reached.'):tr('光は、また集まる。','The light returns.');
@@ -196,6 +196,11 @@
     for(const sw of game.switches){c.fillStyle=sw.active?'#49725f':'#ffe589';const r=Math.max(2,w/100);c.fillRect(sw.x*m-r,sw.y*m-r,r*2,r*2);}
     if(game.portal)circle(c,game.portal.x*m,game.portal.y*m,Math.max(3,w/80),'#82f0cd',false);
     if(game.device&&game.device.hp>0)circle(c,game.device.x*m,game.device.y*m,Math.max(2,w/100),'#6ce3ff');
+    for(const token of game.tokens)circle(c,token.x*m,token.y*m,Math.max(1.5,w/180),token.color);
+    if(game.power){const q=game.power,r=Math.max(3,w/90);c.save();c.translate(q.x*m,q.y*m);c.rotate(Math.PI/4);c.fillStyle='#ffe589';c.fillRect(-r,-r,r*2,r*2);c.restore();}
+    for(const boss of game.enemies)if(boss.hp>0&&boss.type.includes('boss')){
+      const x=boss.x*m,y=boss.y*m,r=Math.max(4,w/65);c.strokeStyle='#ff6178';c.lineWidth=Math.max(1.5,w/250);c.beginPath();c.moveTo(x-r,y-r);c.lineTo(x+r,y+r);c.moveTo(x+r,y-r);c.lineTo(x-r,y+r);c.stroke();
+    }
     circle(c,game.player.x*m,game.player.y*m,Math.max(2.5,w/100),'#ffffff');
   }
   function updateHud(){
