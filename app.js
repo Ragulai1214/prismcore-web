@@ -122,7 +122,7 @@
     };
     for(const surface of floating?[el,$('aimArea')]:[el]){
       surface.addEventListener('pointerdown',e=>{if(game.state!=='playing'||state.id!==null)return;e.preventDefault();audio.unlock();state.id=e.pointerId;
-        if(floating){state.originX=e.clientX;state.originY=e.clientY;const r=el.getBoundingClientRect();el.style.left=`${e.clientX-r.width/2}px`;el.style.top=`${e.clientY-r.height/2}px`;el.style.right=el.style.bottom='auto';}
+        if(floating){state.originX=e.clientX;state.originY=e.clientY;}
         surface.setPointerCapture(e.pointerId);el.classList.add('held');if(floating){state.x=state.y=0;}else update(e);
       });
       surface.addEventListener('pointermove',e=>{if(state.id===e.pointerId){e.preventDefault();if(floating){const r=el.getBoundingClientRect(),dx=e.clientX-state.originX,dy=e.clientY-state.originY,length=Math.hypot(dx,dy),radius=r.width*.34,m=Math.min(1,length/radius);state.x=length>4?dx/length*m:0;state.y=length>4?dy/length*m:0;if(length>4)state.angle=Math.atan2(dy,dx);knob.style.transform=`translate(${state.x*radius}px,${state.y*radius}px)`;}else update(e);}});
