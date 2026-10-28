@@ -31,6 +31,7 @@
   function notify(text){$('toast').textContent=text;$('toast').hidden=false;toastUntil=performance.now()+2400;}
   function resetInput(){keys.clear();mouse.down=false;for(const [stick,obj] of [['moveStick',move],['aimStick',aim]]){obj.x=0;obj.y=0;obj.id=null;$(stick).classList.remove('held');$(stick).querySelector('i').style.transform='';}}
   function syncShell(){
+    if(aim.id===null){const el=$('aimStick');el.style.left=el.style.top=el.style.right=el.style.bottom='';}
     const inRun=!!game.player&&game.state!=='home';
     $('home').hidden=inRun;$('brandbar').hidden=inRun;$('hud').hidden=!inRun;
     $('touchControls').hidden=game.state!=='playing';$('panel').hidden=!page;
@@ -63,7 +64,7 @@
     const body=$('panelContent');document.querySelector('.panel-card').scrollTop=0;$('panelEyebrow').textContent='PRISM CORE / '+page.toUpperCase();$('closePanel').hidden=page==='result';
     if(page==='help'){
       $('panelTitle').textContent=tr('探索ガイド','Expedition guide');
-      body.innerHTML=`<div class="cards"><div class="info-card"><h3>01 / ${tr('移動と射撃','Move & fire')}</h3><p>${tr('左スティックをドラッグして移動。右スティックは倒した方向へ連射します。指を離すと止まります。','Drag the left stick to move. Drag the right stick to aim and fire. Release to stop.')}</p></div><div class="info-card"><h3>02 / ${tr('出口を開く','Open the exit')}</h3><p>${tr('黄色いスイッチをすべて踏むと、ワープが出現。マップで位置を確認できます。次の階でHP全回復。','Step on every yellow switch to reveal the portal. Check your map for locations. Each new floor fully heals you.')}</p></div><div class="info-card"><h3>03 / ${tr('光を集める','Gather light')}</h3><p>${tr('敵が落とすトークンで成長。黄色い円は追尾弾、ひし形は爆発弾です。強化はその探索中に有効。','Collect enemy tokens to grow stronger. Yellow circles grant homing fire; diamonds grant explosive fire. Upgrades last for this expedition.')}</p></div><div class="info-card"><h3>04 / ${tr('最深部へ','Reach the core')}</h3><p>${tr('10階のボスを倒し、ワープへ。1〜9階の敵を全滅させて300秒以内に到達すると、真ボスが出現。','Defeat the floor 10 boss and enter its portal. Clear all enemies on floors 1–9 within 300 seconds to face the true boss.')}</p></div></div><p class="muted" style="margin-top:16px">${tr('PC：WASD / 矢印キーで移動、左クリック長押しで射撃、Space / Esc / Pで一時停止。別タブへの切替時は自動停止。','PC: WASD / arrows to move, hold left click to fire, Space / Esc / P to pause. Switching tabs automatically pauses play.')}</p>`;
+      body.innerHTML=`<div class="cards"><div class="info-card"><h3>01 / ${tr('移動と射撃','Move & fire')}</h3><p>${tr('左スティックをドラッグして移動。右下の操作エリアは、触れた位置を中心にドラッグして照準・連射。射線で方向を確認できます。指を離すと止まります。','Drag the left stick to move. Touch the lower-right area, then drag from that point to aim and fire. Follow the aiming line. Release to stop.')}</p></div><div class="info-card"><h3>02 / ${tr('出口を開く','Open the exit')}</h3><p>${tr('黄色いスイッチをすべて踏むと、ワープが出現。マップで位置を確認できます。次の階でHP全回復。','Step on every yellow switch to reveal the portal. Check your map for locations. Each new floor fully heals you.')}</p></div><div class="info-card"><h3>03 / ${tr('光を集める','Gather light')}</h3><p>${tr('敵が落とすトークンで成長。黄色い円は追尾弾、ひし形は爆発弾です。強化はその探索中に有効。','Collect enemy tokens to grow stronger. Yellow circles grant homing fire; diamonds grant explosive fire. Upgrades last for this expedition.')}</p></div><div class="info-card"><h3>04 / ${tr('最深部へ','Reach the core')}</h3><p>${tr('10階のボスを倒し、ワープへ。1〜9階の敵を全滅させて300秒以内に到達すると、真ボスが出現。','Defeat the floor 10 boss and enter its portal. Clear all enemies on floors 1–9 within 300 seconds to face the true boss.')}</p></div></div><p class="muted" style="margin-top:16px">${tr('PC：WASD / 矢印キーで移動、左クリック長押しで射撃、Space / Esc / Pで一時停止。別タブへの切替時は自動停止。','PC: WASD / arrows to move, hold left click to fire, Space / Esc / P to pause. Switching tabs automatically pauses play.')}</p>`;
     }else if(page==='records'){
       $('panelTitle').textContent=tr('このタブの戦績','This tab’s records');
       body.innerHTML=`<p class="muted">${tr('タブを閉じて開き直すとリセット。同じタブの再読み込みでは保持します。','Records reset when this tab is closed and reopened. Reloading the same tab retains them.')}</p>`;
@@ -113,21 +114,26 @@
     game.events.length=0;
   }
   function bindStick(id,state){
-    const el=$(id),knob=el.querySelector('i');
+    const el=$(id),knob=el.querySelector('i'),floating=id==='aimStick';
     const update=e=>{const r=el.getBoundingClientRect(),radius=r.width*.34,dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,length=Math.hypot(dx,dy),m=Math.min(1,length/radius);
       state.x=length>4?dx/length*m:0;state.y=length>4?dy/length*m:0;
       if(id==='aimStick'&&length>4)state.angle=Math.atan2(dy,dx);
       knob.style.transform=`translate(${state.x*radius}px,${state.y*radius}px)`;
     };
-    el.addEventListener('pointerdown',e=>{if(game.state!=='playing'||state.id!==null)return;e.preventDefault();audio.unlock();state.id=e.pointerId;el.setPointerCapture(e.pointerId);el.classList.add('held');update(e);});
-    el.addEventListener('pointermove',e=>{if(state.id===e.pointerId){e.preventDefault();update(e);}});
-    const release=e=>{if(state.id!==e.pointerId)return;state.id=null;state.x=state.y=0;knob.style.transform='';el.classList.remove('held');};
-    for(const type of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(type,release);
+    for(const surface of floating?[el,$('aimArea')]:[el]){
+      surface.addEventListener('pointerdown',e=>{if(game.state!=='playing'||state.id!==null)return;e.preventDefault();audio.unlock();state.id=e.pointerId;
+        if(floating){state.originX=e.clientX;state.originY=e.clientY;const r=el.getBoundingClientRect();el.style.left=`${e.clientX-r.width/2}px`;el.style.top=`${e.clientY-r.height/2}px`;el.style.right=el.style.bottom='auto';}
+        surface.setPointerCapture(e.pointerId);el.classList.add('held');if(floating){state.x=state.y=0;}else update(e);
+      });
+      surface.addEventListener('pointermove',e=>{if(state.id===e.pointerId){e.preventDefault();if(floating){const r=el.getBoundingClientRect(),dx=e.clientX-state.originX,dy=e.clientY-state.originY,length=Math.hypot(dx,dy),radius=r.width*.34,m=Math.min(1,length/radius);state.x=length>4?dx/length*m:0;state.y=length>4?dy/length*m:0;if(length>4)state.angle=Math.atan2(dy,dx);knob.style.transform=`translate(${state.x*radius}px,${state.y*radius}px)`;}else update(e);}});
+      const release=e=>{if(state.id!==e.pointerId)return;state.id=null;state.x=state.y=0;knob.style.transform='';el.classList.remove('held');if(floating)el.style.left=el.style.top=el.style.right=el.style.bottom='';};
+      for(const type of ['pointerup','pointercancel','lostpointercapture'])surface.addEventListener(type,release);
+    }
   }
   bindStick('moveStick',move);bindStick('aimStick',aim);
   // Install before the first gesture; Safari can start selection from the page
   // ancestor even when the individual stick has user-select disabled.
-  const playSurfaces=[canvas,$('touchControls'),$('moveStick'),$('aimStick')];
+  const playSurfaces=[canvas,$('touchControls'),$('moveStick'),$('aimStick'),$('aimArea')];
   const startsOnPlaySurface=e=>playSurfaces.some(el=>(e.composedPath?.()||[]).includes(el)||e.target===el);
   const capturePlayGesture=e=>{if(startsOnPlaySurface(e))e.preventDefault();};
   for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])document.addEventListener(type,capturePlayGesture,{capture:true,passive:false});
@@ -139,7 +145,7 @@
   });
   // Safari can still start native touch gestures despite pointer-event handling.
   // Scope cancellation to the play surface so menus retain normal scrolling.
-  for(const surface of [canvas,$('touchControls'),$('moveStick'),$('aimStick')]){
+  for(const surface of playSurfaces){
     const preventNative=e=>{if(game.state==='playing')e.preventDefault();};
     for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])surface.addEventListener(type,preventNative,{passive:false});
     for(const type of ['contextmenu','selectstart','dragstart'])surface.addEventListener(type,preventNative);
@@ -164,6 +170,7 @@
   // Keep keyboard focus inside a modal. Escape is handled with the pause shortcut above.
   $('panel').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const list=[...$('panel').querySelectorAll('button:not([hidden]),input')];if(!list.length)return;const first=list[0],end=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}});
   function resize(){
+    resetInput();const stick=$('aimStick');stick.style.left=stick.style.top=stick.style.right=stick.style.bottom='';
     width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
     scale=width<height?Math.min(width/600,height/900):Math.min(width/1000,height/650);
   }
@@ -230,6 +237,10 @@
     for(const b of game.bullets){const color=b.enemy?(b.homing>0?'#ff9cc4':'#ff657b'):b.homing>0?'#b78aff':'#83e8ff';circle(ctx,b.x,b.y,b.radius,b.explosive?color+'66':color);if(b.explosive){ctx.lineWidth=2;circle(ctx,b.x,b.y,b.radius,color,false);}}
     if(p.inv===0||Math.floor(p.inv/4)%2){circle(ctx,p.x,p.y,13,'#ffffff12');circle(ctx,p.x,p.y,8,'#f6f9ff');}
     const a=aim.id!==null?aim.angle:Math.atan2(mouse.y/scale+camera.y-p.y,mouse.x/scale+camera.x-p.x);
+    if(aim.id!==null||mouse.down){
+      let length=20;while(length<600&&!d.wall(p.x+Math.cos(a)*length,p.y+Math.sin(a)*length))length+=5;
+      ctx.save();ctx.strokeStyle='#82f0cd99';ctx.lineWidth=1.5/scale;ctx.setLineDash([8/scale,6/scale]);ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*16,p.y+Math.sin(a)*16);ctx.lineTo(p.x+Math.cos(a)*length,p.y+Math.sin(a)*length);ctx.stroke();ctx.restore();
+    }
     ctx.strokeStyle='#f6f9ff88';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*15,p.y+Math.sin(a)*15);ctx.lineTo(p.x+Math.cos(a)*23,p.y+Math.sin(a)*23);ctx.stroke();
     for(const fx of game.effects){ctx.globalAlpha=Math.min(1,fx.life/15);ctx.fillStyle=fx.color;if(fx.text){ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText(fx.text,fx.x,fx.y-15);}else ctx.fillRect(fx.x,fx.y,3,3);}ctx.globalAlpha=1;ctx.restore();
   }

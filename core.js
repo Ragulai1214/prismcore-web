@@ -94,7 +94,8 @@
     }
     enemy(type,x,y){const t=TYPES[type],boss=type.includes('boss'),group=boss?0:Math.floor((this.floor-1)/2);return {...t,type,x,y,hp:t.hp+30*group,maxHp:t.hp+30*group,atk:t.atk+10*group,group,aggro:boss,inv:0,timer:0,wave:0,phase:1,barrier:false,triggered:false,pattern:false,homingTimer:0};}
     move(entity,dx,dy,separate=false){
-      const clear=(x,y)=>!this.dungeon.wall(x,y)&&(!separate||this.enemies.every(q=>q===entity||q.hp<=0||Math.hypot(q.x-x,q.y-y)>=q.radius+entity.radius+2));
+      const clear=(x,y)=>!this.dungeon.wall(x,y)&&(!separate||this.enemies.every(q=>q===entity||q.hp<=0||Math.hypot(q.x-x,q.y-y)>=q.radius+entity.radius+2))&&
+        !(entity.type==='true_boss'&&this.device?.hp>0&&Math.hypot(this.device.x-x,this.device.y-y)<entity.radius+60);
       if(clear(entity.x+dx,entity.y))entity.x+=dx;
       if(clear(entity.x,entity.y+dy))entity.y+=dy;
     }
@@ -138,7 +139,11 @@
         else if(e.hp/e.maxHp>.5)e.phase=2;
         else if(!e.triggered){e.phase=3;e.barrier=true;e.triggered=true;let pos;
           for(let n=0;n<10;n++){const a=this.random()*TAU,r=200+this.random()*200;pos={x:e.x+Math.cos(a)*r,y:e.y+Math.sin(a)*r};if(!this.dungeon.wall(pos.x,pos.y))break;}
-          if(this.dungeon.wall(pos.x,pos.y))pos={x:clamp(e.x,40,1960),y:clamp(e.y-300,40,1960)};
+          if(this.dungeon.wall(pos.x,pos.y)||distance(pos,e)<e.radius+60){
+            outer:for(let y=60;y<1940;y+=20)for(let x=60;x<1940;x+=20){
+              if(!this.dungeon.wall(x,y)&&distance({x,y},e)>=e.radius+80){pos={x,y};break outer;}
+            }
+          }
           this.device={...pos,hp:1500,maxHp:1500};this.emit('sound',{name:'barrier_activate'});
         }else e.phase=e.barrier?3:4;
         const interval=[0,15,12,100,8][e.phase];

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b101c"><meta name="description" content="Prism Core — ランダムダンジョンを探索するツインスティック・アクション。">
-  <title>Prism Core</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v=20261027-touch3">
+  <title>Prism Core</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css?v=20261028-aim">
 </head>
 <body>
   <main id="app">
@@ -26,9 +26,9 @@
       <button id="mapButton" class="map-button" aria-label="マップを拡大"><canvas id="minimap" width="150" height="150"></canvas><span>MAP ＋</span></button>
       <div class="boss-health" id="bossHealth" hidden><span id="bossName"></span><div class="meter"><i id="bossFill"></i></div></div>
     </section>
-    <div id="touchControls" hidden><div class="stick left-stick" id="moveStick" aria-label="移動スティック"><div class="stick-guide"></div><i></i><span data-ja="移動" data-en="MOVE">移動</span></div><div class="stick right-stick" id="aimStick" aria-label="照準と射撃スティック"><div class="stick-guide"></div><i></i><span data-ja="照準 / 射撃" data-en="AIM / FIRE">照準 / 射撃</span></div></div>
+    <div id="touchControls" hidden><div id="aimArea" aria-hidden="true"></div><div class="stick left-stick" id="moveStick" aria-label="移動スティック"><div class="stick-guide"></div><i></i><span data-ja="移動" data-en="MOVE">移動</span></div><div class="stick right-stick" id="aimStick" aria-label="照準と射撃スティック"><div class="stick-guide"></div><i></i><span data-ja="照準 / 射撃" data-en="AIM / FIRE">照準 / 射撃</span></div></div>
     <div id="toast" role="status" hidden></div>
     <section class="overlay" id="panel" hidden><div class="panel-card"><header class="panel-heading"><div><p class="eyebrow" id="panelEyebrow">PRISM CORE</p><h2 id="panelTitle"></h2></div><button id="closePanel" aria-label="閉じる">✕</button></header><div id="panelContent"></div></div></section>
   </main>
-  <script src="core.js"></script><script src="audio.js"></script><script src="app.js?v=20261027-boss-music"></script>
+  <script src="core.js?v=20261028-barrier"></script><script src="audio.js"></script><script src="app.js?v=20261028-aim"></script>
 </body></html>

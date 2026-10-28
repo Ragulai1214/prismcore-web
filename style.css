@@ -19,3 +19,4 @@ html,body,#app,#app *{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 }
 @media(prefers-reduced-motion:reduce){.core-shape,.orbit-two{animation:none}.meter i{transition:none}}
 .panel-heading{position:sticky;top:-1px;z-index:1;background:#111827;padding:8px 0}
+#aimArea{position:absolute;right:0;top:40%;bottom:0;width:50%;pointer-events:auto;touch-action:none}
