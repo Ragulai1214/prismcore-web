@@ -60,6 +60,7 @@
     start(){
       this.frame=0;this.elapsed=0;this.kills={};this.allKilled=true;this.trueBoss=false;this.state='playing';
       this.player={x:0,y:0,radius:8,hp:200,maxHp:200,atk:20,speed:6,level:1,exp:0,inv:0,explosive:0,homing:0,duration:0,invBonus:0,atkBonus:0,hpBonus:0,speedBonus:0};
+      this.inventory=[null,null,null];
       this.loadFloor(1);
     }
     loadFloor(floor){
@@ -88,7 +89,7 @@
       if(floor===10||this.random()<.5){
         const rooms=floor===10?this.dungeon.rooms:this.dungeon.rooms.slice(1);
         if(rooms.length){let p;for(let n=0;n<100;n++){p=this.dungeon.point(this.dungeon.pick(rooms));if(floor<10||distance(p,{x:1000,y:1000})>=300)break;}
-          this.power={...p,type:this.random()<.5?'explosive':'homing'};}
+          this.power={...p,type:['explosive','homing','heal'][Math.floor(this.random()*3)]};}
       }
       this.dungeon.discover(this.player);this.emit('floor',{floor,trueBoss:this.trueBoss});
     }
@@ -209,6 +210,27 @@
       this.bullets=this.bullets.filter(b=>!b.dead).concat(newBullets).filter(b=>!bossDefeated||!b.enemy);this.enemies=this.enemies.filter(e=>e.hp>0);
     }
     finish(win){if(this.state!=='playing')return;this.state=win?'victory':'gameover';this.emit('finish',{win,floor:this.floor,time:this.elapsed,level:this.player.level,kills:{...this.kills},trueBoss:this.trueBoss});}
+    useItem(slot){
+      if(this.state!=='playing'||!Number.isInteger(slot)||slot<0||slot>2)return false;
+      const type=this.inventory[slot];if(!type)return false;
+      if(type==='heal')this.player.hp=Math.min(this.player.maxHp,this.player.hp+100);
+      else this.player[type]=300+Math.round(this.player.duration*60);
+      this.inventory[slot]=null;this.emit('sound',{name:type==='heal'?'heal':'item_get'});return true;
+    }
+    assistAngle(angle){
+      const p=this.player,cone=Math.PI/18;
+      let best=cone,correction=0;
+      const targets=this.enemies.filter(e=>e.hp>0&&!e.barrier&&e.inv<=0);
+      if(this.device?.hp>0)targets.push(this.device);
+      for(const t of targets){
+        const d=distance(p,t);if(d>650)continue;
+        const diff=Math.atan2(Math.sin(Math.atan2(t.y-p.y,t.x-p.x)-angle),Math.cos(Math.atan2(t.y-p.y,t.x-p.x)-angle));
+        if(Math.abs(diff)>=best)continue;
+        let clear=true;for(let n=10;n<d;n+=10)if(this.dungeon.wall(p.x+(t.x-p.x)*n/d,p.y+(t.y-p.y)*n/d)){clear=false;break;}
+        if(clear){best=Math.abs(diff);correction=clamp(diff*.5,-Math.PI/45,Math.PI/45);}
+      }
+      return angle+correction;
+    }
     nextFloor(){
       this.allKilled=this.allKilled&&this.enemies.length===0;
       if(this.floor===10){this.finish(true);return;}
@@ -227,7 +249,7 @@
       // Death takes priority over a switch, heal pickup or floor transition on this tick.
       if(p.hp<=0){this.finish(false);return;}
       this.tokens=this.tokens.filter(t=>{if(distance(p,t)<23){this.collect(t);return false;}return true;});
-      if(this.power&&distance(p,this.power)<23){p[this.power.type]=300+Math.round(p.duration*60);this.emit('sound',{name:'item_get'});this.power=null;}
+      if(this.power&&distance(p,this.power)<23&&this.inventory.includes(null)){this.inventory[this.inventory.indexOf(null)]=this.power.type;this.emit('sound',{name:'item_get'});this.power=null;}
       for(const sw of this.switches)if(!sw.active&&Math.abs(p.x-sw.x)<=28&&Math.abs(p.y-sw.y)<=18){sw.active=true;this.emit('sound',{name:'button_click'});}
       if(!this.portal&&(this.floor===10?this.enemies.length===0:this.switches.every(sw=>sw.active))){this.portal=center(this.dungeon.pick(this.dungeon.rooms));this.portal.delay=30;this.emit('portal');}
       if(this.portal){if(this.portal.delay>0)this.portal.delay--;else if(distance(p,this.portal)<28){this.nextFloor();return;}}

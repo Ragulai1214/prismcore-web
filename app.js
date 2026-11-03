@@ -8,6 +8,9 @@
   let width=innerWidth,height=innerHeight,scale=1,camera={x:0,y:0},mapExpanded=false;
   const keys=new Set(),mouse={x:0,y:0,down:false};
   const move={x:0,y:0,id:null},aim={x:0,y:0,id:null,angle:-Math.PI/2};
+  const itemLabels={homing:['ホーミング','Homing'],explosive:['爆発弾','Explosive'],heal:['回復薬','Heal']};
+  function refreshItems(){for(let i=0;i<3;i++){const type=game.inventory?.[i],button=$('item'+i);button.disabled=!type||game.state!=='playing';button.dataset.item=type||'empty';button.querySelector('span').textContent=type?itemLabels[type][lang==='ja'?0:1]:tr('空き','Empty');}}
+  function firingAngle(){return aim.id!==null?game.assistAngle(aim.angle):Math.atan2(mouse.y/scale+camera.y-game.player.y,mouse.x/scale+camera.x-game.player.x);}
   const storageKey='prism-core-tab-v1';
   let archive={records:[],kills:{},trophies:{}};
   // sessionStorage survives reloads in this tab, but is not a persistent save.
@@ -33,9 +36,11 @@
   function syncShell(){
     if(aim.id===null){const el=$('aimStick');el.style.left=el.style.top=el.style.right=el.style.bottom='';}
     const inRun=!!game.player&&game.state!=='home';
+    $('app').classList[inRun?'add':'remove']('in-run');
     $('home').hidden=inRun;$('brandbar').hidden=inRun;$('hud').hidden=!inRun;
     $('touchControls').hidden=game.state!=='playing';$('panel').hidden=!page;
     document.querySelector('.ambient').style.opacity=inRun?'0':'1';
+    resize();refreshItems();
   }
   function start(){audio.pause();audio.unlock();audio.music('');resetInput();page=null;game.events=[];game.start();accumulator=0;syncShell();handleEvents();}
   function home(){resetInput();game.state='home';page=null;audio.pause();audio.unlock();audio.music('home');syncShell();}
@@ -64,7 +69,7 @@
     const body=$('panelContent');document.querySelector('.panel-card').scrollTop=0;$('panelEyebrow').textContent='PRISM CORE / '+page.toUpperCase();$('closePanel').hidden=page==='result';
     if(page==='help'){
       $('panelTitle').textContent=tr('探索ガイド','Expedition guide');
-      body.innerHTML=`<div class="cards"><div class="info-card"><h3>01 / ${tr('移動と射撃','Move & fire')}</h3><p>${tr('左スティックをドラッグして移動。右下の操作エリアは、触れた位置を中心にドラッグして照準・連射。射線で方向を確認できます。指を離すと止まります。','Drag the left stick to move. Touch the lower-right area, then drag from that point to aim and fire. Follow the aiming line. Release to stop.')}</p></div><div class="info-card"><h3>02 / ${tr('出口を開く','Open the exit')}</h3><p>${tr('黄色いスイッチをすべて踏むと、ワープが出現。マップで位置を確認できます。次の階でHP全回復。','Step on every yellow switch to reveal the portal. Check your map for locations. Each new floor fully heals you.')}</p></div><div class="info-card"><h3>03 / ${tr('光を集める','Gather light')}</h3><p>${tr('敵が落とすトークンで成長。黄色い円は追尾弾、ひし形は爆発弾です。強化はその探索中に有効。','Collect enemy tokens to grow stronger. Yellow circles grant homing fire; diamonds grant explosive fire. Upgrades last for this expedition.')}</p></div><div class="info-card"><h3>04 / ${tr('最深部へ','Reach the core')}</h3><p>${tr('10階のボスを倒し、ワープへ。1〜9階の敵を全滅させて300秒以内に到達すると、真ボスが出現。','Defeat the floor 10 boss and enter its portal. Clear all enemies on floors 1–9 within 300 seconds to face the true boss.')}</p></div></div><p class="muted" style="margin-top:16px">${tr('PC：WASD / 矢印キーで移動、左クリック長押しで射撃、Space / Esc / Pで一時停止。別タブへの切替時は自動停止。','PC: WASD / arrows to move, hold left click to fire, Space / Esc / P to pause. Switching tabs automatically pauses play.')}</p>`;
+      body.innerHTML=`<div class="cards"><div class="info-card"><h3>01 / ${tr('移動と射撃','Move & fire')}</h3><p>${tr('左スティックをドラッグして移動。下部フッター右側の操作エリアは、触れた位置を中心にドラッグして照準・連射。射線で方向を確認できます。指を離すと止まります。','Drag the left stick to move. Touch the lower-right area, then drag from that point to aim and fire. Follow the aiming line. Release to stop.')}</p></div><div class="info-card"><h3>02 / ${tr('出口を開く','Open the exit')}</h3><p>${tr('黄色いスイッチをすべて踏むと、ワープが出現。マップで位置を確認できます。次の階でHP全回復。','Step on every yellow switch to reveal the portal. Check your map for locations. Each new floor fully heals you.')}</p></div><div class="info-card"><h3>03 / ${tr('光を集める','Gather light')}</h3><p>${tr('敵が落とすトークンで成長。紫は追尾弾、黄色は爆発弾、ピンクのハートはHP100回復。3個までストックし、右下のボタンで使用します。満杯なら地面に残ります。強化はその探索中に有効。','Collect enemy tokens to grow stronger. Purple grants homing fire, yellow grants explosive fire, and pink hearts heal 100 HP. Store up to three and tap a slot to use. Full inventory leaves pickups on the ground. Upgrades last for this expedition.')}</p></div><div class="info-card"><h3>04 / ${tr('最深部へ','Reach the core')}</h3><p>${tr('10階のボスを倒し、ワープへ。1〜9階の敵を全滅させて300秒以内に到達すると、真ボスが出現。','Defeat the floor 10 boss and enter its portal. Clear all enemies on floors 1–9 within 300 seconds to face the true boss.')}</p></div></div><p class="muted" style="margin-top:16px">${tr('PC：WASD / 矢印キーで移動、左クリック長押しで射撃、Space / Esc / Pで一時停止。別タブへの切替時は自動停止。','PC: WASD / arrows to move, hold left click to fire, Space / Esc / P to pause. Switching tabs automatically pauses play.')}</p>`;
     }else if(page==='records'){
       $('panelTitle').textContent=tr('このタブの戦績','This tab’s records');
       body.innerHTML=`<p class="muted">${tr('タブを閉じて開き直すとリセット。同じタブの再読み込みでは保持します。','Records reset when this tab is closed and reopened. Reloading the same tab retains them.')}</p>`;
@@ -93,7 +98,7 @@
       $('panelTitle').textContent=tr('探索を終了しますか？','End this expedition?');body.innerHTML=`<p>${tr('今回の到達階層と撃破数を戦績に記録して、タイトルへ戻ります。','Record this expedition’s progress and return to the title screen.')}</p><div class="button-row">${button('cancelRetire',tr('戻る','Go back'),true)}${button('confirmRetire',tr('終了する','End expedition'))}</div>`;
       $('cancelRetire').onclick=()=>{page='pause';renderPanel();};$('confirmRetire').onclick=()=>{game.state='playing';game.finish(false);handleEvents();home();};
     }else if(page==='map'){
-      $('panelTitle').textContent=tr('探索マップ','Sector map');body.innerHTML=`<canvas id="largeMap" class="large-map" width="500" height="500"></canvas><div class="map-legend"><span style="color:#ffe589">■ ${tr('スイッチ','SWITCH')}</span><span style="color:#82f0cd">◇ ${tr('ワープ','PORTAL')}</span><span>● ${tr('現在地','YOU')}</span><span style="color:#ff6178">× ${tr('ボス','BOSS')}</span><span style="color:#ffe589">◆ ${tr('特殊弾アイテム','POWER-UP')}</span><span>· ${tr('トークン（各色）','TOKENS (COLORED)')}</span><span style="color:#6ce3ff">● ${tr('バリア装置','BARRIER DEVICE')}</span></div>`;drawMap($('largeMap'));
+      $('panelTitle').textContent=tr('探索マップ','Sector map');body.innerHTML=`<canvas id="largeMap" class="large-map" width="500" height="500"></canvas><div class="map-legend"><span style="color:#ffe589">■ ${tr('スイッチ','SWITCH')}</span><span style="color:#82f0cd">◇ ${tr('ワープ','PORTAL')}</span><span>● ${tr('現在地','YOU')}</span><span style="color:#ff6178">× ${tr('ボス','BOSS')}</span><span style="color:#b78aff">◆ ${tr('ホーミング','HOMING')}</span><span style="color:#ffe589">◆ ${tr('爆発弾','EXPLOSIVE')}</span><span style="color:#ff9bcb">◆ ${tr('回復薬','HEAL')}</span><span>· ${tr('トークン（各色）','TOKENS (COLORED)')}</span><span style="color:#6ce3ff">● ${tr('バリア装置','BARRIER DEVICE')}</span></div>`;drawMap($('largeMap'));
     }else if(page==='result'){
       const win=game.state==='victory',total=Object.values(game.kills).reduce((a,b)=>a+b,0);
       $('panelTitle').textContent=win?tr('最深部、到達。','Core reached.'):tr('光は、また集まる。','The light returns.');
@@ -122,19 +127,21 @@
     };
     for(const surface of floating?[el,$('aimArea')]:[el]){
       surface.addEventListener('pointerdown',e=>{if(game.state!=='playing'||state.id!==null)return;e.preventDefault();audio.unlock();state.id=e.pointerId;
-        if(floating){state.originX=e.clientX;state.originY=e.clientY;}
+        if(floating){state.originX=e.clientX;state.originY=e.clientY;state.targetAngle=null;}
         surface.setPointerCapture(e.pointerId);el.classList.add('held');if(floating){state.x=state.y=0;}else update(e);
       });
-      surface.addEventListener('pointermove',e=>{if(state.id===e.pointerId){e.preventDefault();if(floating){const r=el.getBoundingClientRect(),dx=e.clientX-state.originX,dy=e.clientY-state.originY,length=Math.hypot(dx,dy),radius=r.width*.34,m=Math.min(1,length/radius);state.x=length>4?dx/length*m:0;state.y=length>4?dy/length*m:0;if(length>4)state.angle=Math.atan2(dy,dx);knob.style.transform=`translate(${state.x*radius}px,${state.y*radius}px)`;}else update(e);}});
+      surface.addEventListener('pointermove',e=>{if(state.id===e.pointerId){e.preventDefault();if(floating){const r=el.getBoundingClientRect(),dx=e.clientX-state.originX,dy=e.clientY-state.originY,length=Math.hypot(dx,dy),radius=r.width*.34,m=clamp((length-12)/(radius-12),0,1);state.x=length>12?dx/length*m:0;state.y=length>12?dy/length*m:0;if(length>12){const a=Math.atan2(dy,dx);if(state.targetAngle===null)state.angle=a;state.targetAngle=a;}else state.targetAngle=null;knob.style.transform=`translate(${state.x*radius}px,${state.y*radius}px)`;}else update(e);}});
       const release=e=>{if(state.id!==e.pointerId)return;state.id=null;state.x=state.y=0;knob.style.transform='';el.classList.remove('held');if(floating)el.style.left=el.style.top=el.style.right=el.style.bottom='';};
       for(const type of ['pointerup','pointercancel','lostpointercapture'])surface.addEventListener(type,release);
     }
   }
   bindStick('moveStick',move);bindStick('aimStick',aim);
+  for(let i=0;i<3;i++)$('item'+i).onclick=()=>{audio.unlock();if(game.useItem(i)){handleEvents();refreshItems();}};
   // Install before the first gesture; Safari can start selection from the page
   // ancestor even when the individual stick has user-select disabled.
   const playSurfaces=[canvas,$('touchControls'),$('moveStick'),$('aimStick'),$('aimArea')];
-  const startsOnPlaySurface=e=>playSurfaces.some(el=>(e.composedPath?.()||[]).includes(el)||e.target===el);
+  const isItemButton=e=>!!e.target?.closest?.('.item-slot');
+  const startsOnPlaySurface=e=>!isItemButton(e)&&playSurfaces.some(el=>(e.composedPath?.()||[]).includes(el)||e.target===el);
   const capturePlayGesture=e=>{if(startsOnPlaySurface(e))e.preventDefault();};
   for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])document.addEventListener(type,capturePlayGesture,{capture:true,passive:false});
   for(const type of ['selectstart','contextmenu'])document.addEventListener(type,e=>{
@@ -146,12 +153,12 @@
   // Safari can still start native touch gestures despite pointer-event handling.
   // Scope cancellation to the play surface so menus retain normal scrolling.
   for(const surface of playSurfaces){
-    const preventNative=e=>{if(game.state==='playing')e.preventDefault();};
+    const preventNative=e=>{if(game.state==='playing'&&!isItemButton(e))e.preventDefault();};
     for(const type of ['touchstart','touchmove','touchend','gesturestart','gesturechange','gestureend'])surface.addEventListener(type,preventNative,{passive:false});
     for(const type of ['contextmenu','selectstart','dragstart'])surface.addEventListener(type,preventNative);
   }
-  canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===0&&game.state==='playing'){mouse.down=true;mouse.x=e.clientX;mouse.y=e.clientY;canvas.setPointerCapture(e.pointerId);}});
-  canvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){mouse.x=e.clientX;mouse.y=e.clientY;}});
+  canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button===0&&game.state==='playing'){const r=canvas.getBoundingClientRect();mouse.down=true;mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;canvas.setPointerCapture(e.pointerId);}});
+  canvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;}});
   for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,()=>mouse.down=false);
   window.addEventListener('keydown',e=>{
     if(e.target instanceof HTMLInputElement)return;
@@ -171,7 +178,7 @@
   $('panel').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const list=[...$('panel').querySelectorAll('button:not([hidden]),input')];if(!list.length)return;const first=list[0],end=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}});
   function resize(){
     resetInput();const stick=$('aimStick');stick.style.left=stick.style.top=stick.style.right=stick.style.bottom='';
-    width=innerWidth;height=innerHeight;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+    const bounds=canvas.getBoundingClientRect();width=Math.max(1,bounds.width);height=Math.max(1,bounds.height);const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
     scale=width<height?Math.min(width/600,height/900):Math.min(width/1000,height/650);
   }
   window.addEventListener('resize',resize);resize();
@@ -197,13 +204,14 @@
     if(game.portal)circle(c,game.portal.x*m,game.portal.y*m,Math.max(3,w/80),'#82f0cd',false);
     if(game.device&&game.device.hp>0)circle(c,game.device.x*m,game.device.y*m,Math.max(2,w/100),'#6ce3ff');
     for(const token of game.tokens)circle(c,token.x*m,token.y*m,Math.max(1.5,w/180),token.color);
-    if(game.power){const q=game.power,r=Math.max(3,w/90);c.save();c.translate(q.x*m,q.y*m);c.rotate(Math.PI/4);c.fillStyle='#ffe589';c.fillRect(-r,-r,r*2,r*2);c.restore();}
+    if(game.power){const q=game.power,r=Math.max(3,w/90);c.save();c.translate(q.x*m,q.y*m);c.rotate(Math.PI/4);c.fillStyle=q.type==='homing'?'#b78aff':q.type==='heal'?'#ff9bcb':'#ffe589';c.fillRect(-r,-r,r*2,r*2);c.restore();}
     for(const boss of game.enemies)if(boss.hp>0&&boss.type.includes('boss')){
       const x=boss.x*m,y=boss.y*m,r=Math.max(4,w/65);c.strokeStyle='#ff6178';c.lineWidth=Math.max(1.5,w/250);c.beginPath();c.moveTo(x-r,y-r);c.lineTo(x+r,y+r);c.moveTo(x+r,y-r);c.lineTo(x-r,y+r);c.stroke();
     }
     circle(c,game.player.x*m,game.player.y*m,Math.max(2.5,w/100),'#ffffff');
   }
   function updateHud(){
+    refreshItems();
     const p=game.player;$('hpText').textContent=`${Math.ceil(p.hp)} / ${p.maxHp}`;$('hpFill').style.width=`${100*p.hp/p.maxHp}%`;$('hpFill').style.background=p.hp/p.maxHp<.3?'#ff6178':'#82f0cd';
     $('levelText').textContent=`LV ${String(p.level).padStart(2,'0')}`;$('expFill').style.width=`${p.level===10?100:100*p.exp/EXP[p.level-1]}%`;
     $('floorText').innerHTML=`${String(game.floor).padStart(2,'0')} <small>/ 10</small>`;$('timerText').textContent=time(game.elapsed);
@@ -230,7 +238,7 @@
     for(const sw of game.switches){ctx.fillStyle=sw.active?'#82f0cd25':'#ffe58922';ctx.strokeStyle=sw.active?'#82f0cd':'#ffe589';ctx.lineWidth=2;ctx.fillRect(sw.x-20,sw.y-10,40,20);ctx.strokeRect(sw.x-20,sw.y-10,40,20);if(sw.active){ctx.font='14px sans-serif';ctx.fillStyle='#82f0cd';ctx.fillText('✓',sw.x-5,sw.y+5);}}
     if(game.portal){const q=game.portal;ctx.lineWidth=2;circle(ctx,q.x,q.y,24+Math.sin(now/250)*3,'#82f0cd',false);circle(ctx,q.x,q.y,16,'#82f0cd22');ctx.save();ctx.translate(q.x,q.y);ctx.rotate(now/1000);ctx.strokeStyle='#82f0cd';ctx.strokeRect(-12,-12,24,24);ctx.restore();}
     for(const t of game.tokens){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.PI/4);ctx.fillStyle=t.color;ctx.fillRect(-4,-4,8,8);ctx.restore();}
-    if(game.power){const q=game.power;ctx.strokeStyle='#ffe589';ctx.lineWidth=2;circle(ctx,q.x,q.y,20+Math.sin(now/200)*2,'#ffe58920');if(q.type==='homing')circle(ctx,q.x,q.y,12,'#ffe589',false);else{ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.PI/4);ctx.strokeRect(-9,-9,18,18);ctx.restore();}}
+    if(game.power){const q=game.power,color=q.type==='homing'?'#b78aff':q.type==='heal'?'#ff9bcb':'#ffe589';ctx.strokeStyle=color;ctx.lineWidth=2;circle(ctx,q.x,q.y,20+Math.sin(now/200)*2,color+'20');if(q.type==='homing')circle(ctx,q.x,q.y,12,color,false);else if(q.type==='heal')drawShape(ctx,'heart',q.x,q.y,15);else{ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.PI/4);ctx.strokeRect(-9,-9,18,18);ctx.restore();}}
     if(game.device&&game.device.hp>0){const q=game.device;ctx.strokeStyle='#6ce3ff';ctx.lineWidth=2;ctx.strokeRect(q.x-20,q.y-20,40,40);circle(ctx,q.x,q.y,12,'#6ce3ff',false);ctx.fillStyle='#6ce3ff';ctx.fillRect(q.x-24,q.y-30,48*q.hp/q.maxHp,4);}
     for(const e of game.enemies){
       if(e.x<camera.x-120||e.x>camera.x+viewW+120||e.y<camera.y-120||e.y>camera.y+viewH+120)continue;
@@ -241,7 +249,7 @@
     }
     for(const b of game.bullets){const color=b.enemy?(b.homing>0?'#ff9cc4':'#ff657b'):b.homing>0?'#b78aff':'#83e8ff';circle(ctx,b.x,b.y,b.radius,b.explosive?color+'66':color);if(b.explosive){ctx.lineWidth=2;circle(ctx,b.x,b.y,b.radius,color,false);}}
     if(p.inv===0||Math.floor(p.inv/4)%2){circle(ctx,p.x,p.y,13,'#ffffff12');circle(ctx,p.x,p.y,8,'#f6f9ff');}
-    const a=aim.id!==null?aim.angle:Math.atan2(mouse.y/scale+camera.y-p.y,mouse.x/scale+camera.x-p.x);
+    const a=firingAngle();
     if(aim.id!==null||mouse.down){
       let length=20;while(length<600&&!d.wall(p.x+Math.cos(a)*length,p.y+Math.sin(a)*length))length+=5;
       ctx.save();ctx.strokeStyle='#82f0cd99';ctx.lineWidth=1.5/scale;ctx.setLineDash([8/scale,6/scale]);ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*16,p.y+Math.sin(a)*16);ctx.lineTo(p.x+Math.cos(a)*length,p.y+Math.sin(a)*length);ctx.stroke();ctx.restore();
@@ -255,8 +263,8 @@
     if(game.state==='playing'){
       accumulator+=delta;
       const keyX=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0),keyY=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
-      const input={x:move.id!==null?move.x:keyX,y:move.id!==null?move.y:keyY,shoot:aim.id!==null&&Math.hypot(aim.x,aim.y)>.15||mouse.down,angle:aim.id!==null?aim.angle:Math.atan2(mouse.y/scale+camera.y-game.player.y,mouse.x/scale+camera.x-game.player.x)};
-      while(accumulator>=1/60&&game.state==='playing'){game.step(input);accumulator-=1/60;handleEvents();}
+      const input={x:move.id!==null?move.x:keyX,y:move.id!==null?move.y:keyY,shoot:aim.id!==null&&Math.hypot(aim.x,aim.y)>.15||mouse.down};
+      while(accumulator>=1/60&&game.state==='playing'){if(aim.id!==null&&aim.targetAngle!=null){const diff=Math.atan2(Math.sin(aim.targetAngle-aim.angle),Math.cos(aim.targetAngle-aim.angle));if(Math.abs(diff)>.025)aim.angle+=diff*.22;}input.angle=firingAngle();game.step(input);accumulator-=1/60;handleEvents();}
     }else accumulator=0;
     render(now);if(game.player&&game.state!=='home'&&hudFrame++%6===0)updateHud();
     if(now>toastUntil)$('toast').hidden=true;
