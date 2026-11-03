@@ -235,7 +235,23 @@
       if(y===0||d.grid[(y-1)*100+x]){ctx.beginPath();ctx.moveTo(x*20,y*20);ctx.lineTo(x*20+20,y*20);ctx.stroke();}
       if(x===0||d.grid[y*100+x-1]){ctx.beginPath();ctx.moveTo(x*20,y*20);ctx.lineTo(x*20,y*20+20);ctx.stroke();}
     }
-    for(const sw of game.switches){ctx.fillStyle=sw.active?'#82f0cd25':'#ffe58922';ctx.strokeStyle=sw.active?'#82f0cd':'#ffe589';ctx.lineWidth=2;ctx.fillRect(sw.x-20,sw.y-10,40,20);ctx.strokeRect(sw.x-20,sw.y-10,40,20);if(sw.active){ctx.font='14px sans-serif';ctx.fillStyle='#82f0cd';ctx.fillText('✓',sw.x-5,sw.y+5);}}
+    for(const sw of game.switches){
+      ctx.save();ctx.translate(sw.x,sw.y);
+      // Metal housing, corner screws and a raised/depressed pressure plate.
+      ctx.fillStyle='#00000055';ctx.fillRect(-26,-12,52,34);
+      ctx.fillStyle='#253448';ctx.strokeStyle='#64758b';ctx.lineWidth=2;
+      ctx.fillRect(-26,-18,52,34);ctx.strokeRect(-26,-18,52,34);
+      for(const x of [-22,22])for(const y of [-14,12])circle(ctx,x,y,1.5,'#a9b7c8');
+      const top=sw.active?-9:-15,color=sw.active?'#82f0cd':'#ffe589';
+      ctx.fillStyle=sw.active?'#284f44':'#8a641e';ctx.fillRect(-17,top+4,34,20);
+      ctx.fillStyle=sw.active?'#24473f':'#cfa33c';ctx.fillRect(-17,top,34,18);
+      ctx.strokeStyle=color;ctx.strokeRect(-17,top,34,18);
+      ctx.fillStyle=color;ctx.font='bold 10px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(sw.active?'ON':'OFF',0,top+9);
+      // A separate indicator makes the activated state legible without color.
+      circle(ctx,0,12,2.5,sw.active?'#82f0cd':'#564c30');
+      ctx.restore();
+    }
     if(game.portal){const q=game.portal;ctx.lineWidth=2;circle(ctx,q.x,q.y,24+Math.sin(now/250)*3,'#82f0cd',false);circle(ctx,q.x,q.y,16,'#82f0cd22');ctx.save();ctx.translate(q.x,q.y);ctx.rotate(now/1000);ctx.strokeStyle='#82f0cd';ctx.strokeRect(-12,-12,24,24);ctx.restore();}
     for(const t of game.tokens){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.PI/4);ctx.fillStyle=t.color;ctx.fillRect(-4,-4,8,8);ctx.restore();}
     if(game.power){const q=game.power,color=q.type==='homing'?'#b78aff':q.type==='heal'?'#ff9bcb':'#ffe589';ctx.strokeStyle=color;ctx.lineWidth=2;circle(ctx,q.x,q.y,20+Math.sin(now/200)*2,color+'20');if(q.type==='homing')circle(ctx,q.x,q.y,12,color,false);else if(q.type==='heal')drawShape(ctx,'heart',q.x,q.y,15);else{ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.PI/4);ctx.strokeRect(-9,-9,18,18);ctx.restore();}}
