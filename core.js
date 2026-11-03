@@ -186,7 +186,11 @@
         if(b.dead)continue;
         if(b.delay>0)b.delay--;
         else if(b.homing>0){let target=p;
-          if(!b.enemy)target=this.enemies.filter(e=>e.hp>0).reduce((best,e)=>!best||distance(b,e)<distance(b,best)?e:best,null);
+          if(!b.enemy){
+            const targets=this.enemies.filter(e=>e.hp>0&&!e.barrier&&e.inv<=0);
+            if(this.device&&this.device.hp>0)targets.push(this.device);
+            target=targets.reduce((best,e)=>!best||distance(b,e)<distance(b,best)?e:best,null);
+          }
           if(target)b.angle=Math.atan2(target.y-b.y,target.x-b.x);b.homing--;
         }
         b.x+=Math.cos(b.angle)*b.speed;b.y+=Math.sin(b.angle)*b.speed;
