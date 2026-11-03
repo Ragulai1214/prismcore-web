@@ -179,7 +179,7 @@
   function resize(){
     resetInput();const stick=$('aimStick');stick.style.left=stick.style.top=stick.style.right=stick.style.bottom='';
     const bounds=canvas.getBoundingClientRect();width=Math.max(1,bounds.width);height=Math.max(1,bounds.height);const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-    scale=width<height?Math.min(width/600,height/900):Math.min(width/1000,height/650);
+    scale=1.2*(width<height?Math.min(width/600,height/900):Math.min(width/1000,height/650));
   }
   window.addEventListener('resize',resize);resize();
   function drawShape(c,type,x,y,r,rotation=0){
